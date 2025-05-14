@@ -295,7 +295,7 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> with Si
                   });
                 },
               )
-            : const Text('Clipboard'),
+            : const Text('Zen'),
         leading: _isSearching
             ? IconButton(
                 icon: const Icon(Icons.arrow_back, color: darkText),
