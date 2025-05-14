@@ -4,14 +4,14 @@ import 'services/database_service.dart';
 import 'widgets/blur_dialog.dart';
 
 // Couleurs personnalisées pour le thème sombre
-const darkBackground = Color(0xFF1A1B1E);
-const darkSurface = Color(0xFF2A2B2E);
-const darkPrimary = Color(0xFF7289DA);
-const darkSecondary = Color(0xFFB8C0E0);
-const darkText = Color(0xFFE9ECEF);
-const darkTextSecondary = Color(0xFF9CA3AF);
-const darkBorder = Color(0xFF2F3136);
-const darkError = Color(0xFFEF4444);
+const darkBackground = Color(0xFF1E1E2E);
+const darkSurface = Color(0xFF2A2A3C);
+const darkPrimary = Color(0xFF94E2D5);
+const darkSecondary = Color(0xFFA6E3A1);
+const darkText = Color(0xFFCDD6F4);
+const darkTextSecondary = Color(0xFF9399B2);
+const darkBorder = Color(0xFF313244);
+const darkError = Color(0xFFF38BA8);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,15 +51,18 @@ class MainApp extends StatelessWidget {
           systemOverlayStyle: SystemUiOverlayStyle.light,
           titleTextStyle: TextStyle(
             color: darkText,
-            fontSize: 24,
+            fontSize: 28,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.5,
           ),
         ),
-        snackBarTheme: const SnackBarThemeData(
-          backgroundColor: darkSurface,
-          contentTextStyle: TextStyle(color: darkText),
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: darkSurface.withOpacity(0.95),
+          contentTextStyle: const TextStyle(color: darkText),
           behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
       home: const ClipboardManagerScreen(),
@@ -272,16 +275,17 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> with Si
                 children: [
                   Icon(
                     Icons.content_paste_outlined,
-                    size: 64,
-                    color: darkTextSecondary.withOpacity(0.5),
+                    size: 84,
+                    color: darkTextSecondary.withOpacity(0.3),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   const Text(
                     'Aucun élément copié',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       color: darkTextSecondary,
                       letterSpacing: -0.5,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -294,17 +298,17 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> with Si
               ),
               child: ReorderableListView.builder(
                 buildDefaultDragHandles: false,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.all(16),
                 itemCount: _filteredHistory.length,
                 proxyDecorator: (child, index, animation) {
                   return AnimatedBuilder(
                     animation: animation,
                     builder: (context, child) {
-                      final double elevation = animation.value * 8;
+                      final double elevation = animation.value * 12;
                       return Material(
                         elevation: elevation,
                         color: darkSurface,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                         child: child,
                       );
                     },
@@ -318,24 +322,31 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> with Si
                     key: Key(item['id'].toString()),
                     index: index,
                     child: Container(
-                      margin: const EdgeInsets.only(bottom: 1),
-                      decoration: const BoxDecoration(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
                         color: darkSurface,
-                        border: Border(
-                          bottom: BorderSide(
-                            color: darkBorder,
-                            width: 1,
-                          ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: darkBorder,
+                          width: 1,
                         ),
                       ),
                       child: Material(
                         color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        clipBehavior: Clip.antiAlias,
                         child: InkWell(
                           onTap: () {
                             Clipboard.setData(ClipboardData(text: item['content']));
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Copié dans le presse-papiers'),
+                                content: Text(
+                                  'Copié dans le presse-papiers',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                                 duration: Duration(seconds: 1),
                               ),
                             );
@@ -343,7 +354,7 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> with Si
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               vertical: 16,
-                              horizontal: 16,
+                              horizontal: 20,
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,17 +369,28 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> with Si
                                           fontSize: 15,
                                           height: 1.5,
                                           color: darkText,
+                                          letterSpacing: 0.1,
                                         ),
                                         maxLines: 3,
                                         overflow: TextOverflow.ellipsis,
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _formatTimestamp(item['timestamp']),
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: darkTextSecondary,
-                                          letterSpacing: -0.3,
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: darkBackground.withOpacity(0.5),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          _formatTimestamp(item['timestamp']),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: darkTextSecondary,
+                                            letterSpacing: -0.3,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -381,6 +403,11 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> with Si
                                     color: darkTextSecondary,
                                   ),
                                   onPressed: () => _deleteItem(item['id']),
+                                  style: IconButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
