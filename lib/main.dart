@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'services/database_service.dart';
 import 'widgets/blur_dialog.dart';
+import 'package:window_manager/window_manager.dart';
+import 'dart:io';
 
 // Couleurs personnalisées pour le thème sombre
 const darkBackground = Color(0xFF1E1E2E);
@@ -15,6 +17,27 @@ const darkError = Color(0xFFF38BA8);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Configuration de la taille de la fenêtre
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    await windowManager.ensureInitialized();
+    
+    WindowOptions windowOptions = const WindowOptions(
+      size: Size(600, 800),
+      minimumSize: Size(400, 600),
+      maximumSize: Size(400, 600),
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.normal,
+    );
+    
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -156,6 +179,96 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> with Si
     setState(() {});
   }
 
+  void _showCopyrightDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      builder: (context) => BlurDialog(
+        child: AlertDialog(
+          backgroundColor: darkSurface.withOpacity(0.95),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: darkBackground.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.copyright_rounded,
+                  color: darkPrimary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'À propos',
+                style: TextStyle(
+                  color: darkText,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Zen',
+                style: TextStyle(
+                  color: darkPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Version ${DateTime.now().year}.1.0',
+                style: const TextStyle(
+                  color: darkTextSecondary,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '© ${DateTime.now().year} Tiavina ❤️.',
+                style: const TextStyle(
+                  color: darkText,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                foregroundColor: darkPrimary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+              ),
+              child: const Text(
+                'Fermer',
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -265,6 +378,14 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> with Si
                 );
               },
             ),
+          if (!_isSearching)
+            IconButton(
+              icon: const Icon(
+                Icons.info_outline,
+                color: darkText,
+              ),
+              onPressed: _showCopyrightDialog,
+            ),
           const SizedBox(width: 8),
         ],
       ),
@@ -296,127 +417,132 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> with Si
                 canvasColor: darkBackground,
                 shadowColor: Colors.black.withOpacity(0.3),
               ),
-              child: ReorderableListView.builder(
-                buildDefaultDragHandles: false,
-                padding: const EdgeInsets.all(16),
-                itemCount: _filteredHistory.length,
-                proxyDecorator: (child, index, animation) {
-                  return AnimatedBuilder(
-                    animation: animation,
-                    builder: (context, child) {
-                      final double elevation = animation.value * 12;
-                      return Material(
-                        elevation: elevation,
-                        color: darkSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        child: child,
-                      );
-                    },
-                    child: child,
-                  );
-                },
-                onReorder: _onReorder,
-                itemBuilder: (context, index) {
-                  final item = _filteredHistory[index];
-                  return ReorderableDragStartListener(
-                    key: Key(item['id'].toString()),
-                    index: index,
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: darkSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: darkBorder,
-                          width: 1,
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  scrollbars: false,
+                ),
+                child: ReorderableListView.builder(
+                  buildDefaultDragHandles: false,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _filteredHistory.length,
+                  proxyDecorator: (child, index, animation) {
+                    return AnimatedBuilder(
+                      animation: animation,
+                      builder: (context, child) {
+                        final double elevation = animation.value * 12;
+                        return Material(
+                          elevation: elevation,
+                          color: darkSurface,
+                          borderRadius: BorderRadius.circular(12),
+                          child: child,
+                        );
+                      },
+                      child: child,
+                    );
+                  },
+                  onReorder: _onReorder,
+                  itemBuilder: (context, index) {
+                    final item = _filteredHistory[index];
+                    return ReorderableDragStartListener(
+                      key: Key(item['id'].toString()),
+                      index: index,
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: darkSurface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: darkBorder,
+                            width: 1,
+                          ),
                         ),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        clipBehavior: Clip.antiAlias,
-                        child: InkWell(
-                          onTap: () {
-                            Clipboard.setData(ClipboardData(text: item['content']));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Copié dans le presse-papiers',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                duration: Duration(seconds: 1),
-                              ),
-                            );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 20,
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item['content'],
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          height: 1.5,
-                                          color: darkText,
-                                          letterSpacing: 0.1,
-                                        ),
-                                        maxLines: 3,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: darkBackground.withOpacity(0.5),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          _formatTimestamp(item['timestamp']),
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: darkTextSecondary,
-                                            letterSpacing: -0.3,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    size: 20,
-                                    color: darkTextSecondary,
-                                  ),
-                                  onPressed: () => _deleteItem(item['id']),
-                                  style: IconButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            onTap: () {
+                              Clipboard.setData(ClipboardData(text: item['content']));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Copié dans le presse-papiers',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
+                                  duration: Duration(seconds: 1),
                                 ),
-                              ],
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 20,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item['content'],
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            height: 1.5,
+                                            color: darkText,
+                                            letterSpacing: 0.1,
+                                          ),
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: darkBackground.withOpacity(0.5),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            _formatTimestamp(item['timestamp']),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: darkTextSecondary,
+                                              letterSpacing: -0.3,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      size: 20,
+                                      color: darkTextSecondary,
+                                    ),
+                                    onPressed: () => _deleteItem(item['id']),
+                                    style: IconButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
     );
