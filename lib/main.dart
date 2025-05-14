@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'services/database_service.dart';
+import 'widgets/blur_dialog.dart';
 
 // Couleurs personnalisées pour le thème sombre
 const darkBackground = Color(0xFF1A1B1E);
@@ -216,45 +217,47 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> with Si
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (context) => AlertDialog(
-                    backgroundColor: darkSurface,
-                    title: const Text(
-                      'Vider l\'historique',
-                      style: TextStyle(
-                        color: darkText,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
+                  barrierColor: Colors.transparent,
+                  builder: (context) => BlurDialog(
+                    child: AlertDialog(
+                      backgroundColor: darkSurface.withOpacity(0.95),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    ),
-                    content: const Text(
-                      'Voulez-vous vraiment supprimer tout l\'historique ?',
-                      style: TextStyle(
-                        color: darkTextSecondary,
-                      ),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text(
-                          'Annuler',
-                          style: TextStyle(
-                            color: darkTextSecondary,
-                          ),
+                      title: const Text(
+                        'Vider l\'historique',
+                        style: TextStyle(
+                          color: darkText,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      TextButton(
-                        onPressed: () {
-                          _clearHistory();
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'Supprimer',
-                          style: TextStyle(
-                            color: darkError,
-                          ),
+                      content: const Text(
+                        'Voulez-vous vraiment supprimer tout l\'historique ?',
+                        style: TextStyle(
+                          color: darkTextSecondary,
                         ),
                       ),
-                    ],
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            foregroundColor: darkTextSecondary,
+                          ),
+                          child: const Text('Annuler'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            _clearHistory();
+                            Navigator.pop(context);
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: darkError,
+                          ),
+                          child: const Text('Supprimer'),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
