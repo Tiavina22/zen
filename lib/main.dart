@@ -2,8 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'services/database_service.dart';
 
+// Couleurs personnalisées pour le thème sombre
+const darkBackground = Color(0xFF1A1B1E);
+const darkSurface = Color(0xFF2A2B2E);
+const darkPrimary = Color(0xFF7289DA);
+const darkSecondary = Color(0xFFB8C0E0);
+const darkText = Color(0xFFE9ECEF);
+const darkTextSecondary = Color(0xFF9CA3AF);
+const darkBorder = Color(0xFF2F3136);
+const darkError = Color(0xFFEF4444);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: darkBackground,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
   await DatabaseService.initialize();
   runApp(const MainApp());
 }
@@ -15,34 +33,32 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
+      theme: ThemeData.dark().copyWith(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2E3440),
-          brightness: Brightness.light,
+        scaffoldBackgroundColor: darkBackground,
+        colorScheme: const ColorScheme.dark(
+          primary: darkPrimary,
+          secondary: darkSecondary,
+          surface: darkSurface,
+          background: darkBackground,
+          error: darkError,
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
+          backgroundColor: darkBackground,
           elevation: 0,
           centerTitle: false,
-          systemOverlayStyle: SystemUiOverlayStyle.dark,
+          systemOverlayStyle: SystemUiOverlayStyle.light,
           titleTextStyle: TextStyle(
-            color: Color(0xFF2E3440),
+            color: darkText,
             fontSize: 24,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.5,
           ),
         ),
-        cardTheme: CardTheme(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          color: Colors.transparent,
-        ),
         snackBarTheme: const SnackBarThemeData(
+          backgroundColor: darkSurface,
+          contentTextStyle: TextStyle(color: darkText),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: Color(0xFF2E3440),
         ),
       ),
       home: const ClipboardManagerScreen(),
@@ -57,23 +73,29 @@ class ClipboardManagerScreen extends StatefulWidget {
   State<ClipboardManagerScreen> createState() => _ClipboardManagerScreenState();
 }
 
-class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
+class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> with SingleTickerProviderStateMixin {
   final List<Map<String, dynamic>> _clipboardHistory = [];
   String? _lastCopiedText;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
     _loadClipboardHistory();
     _startClipboardListener();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -133,7 +155,6 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title: _isSearching
             ? TextField(
@@ -141,12 +162,12 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
                 autofocus: true,
                 style: const TextStyle(
                   fontSize: 18,
-                  color: Color(0xFF2E3440),
+                  color: darkText,
                 ),
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Rechercher...',
                   hintStyle: TextStyle(
-                    color: Colors.grey[400],
+                    color: darkTextSecondary,
                     fontSize: 18,
                   ),
                   border: InputBorder.none,
@@ -160,8 +181,7 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
             : const Text('Clipboard'),
         leading: _isSearching
             ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                color: const Color(0xFF2E3440),
+                icon: const Icon(Icons.arrow_back, color: darkText),
                 onPressed: () {
                   setState(() {
                     _isSearching = false;
@@ -175,7 +195,7 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
           IconButton(
             icon: Icon(
               _isSearching ? Icons.close : Icons.search,
-              color: const Color(0xFF2E3440),
+              color: darkText,
             ),
             onPressed: () {
               setState(() {
@@ -191,24 +211,25 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
             IconButton(
               icon: const Icon(
                 Icons.delete_outline,
-                color: Color(0xFF2E3440),
+                color: darkText,
               ),
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
+                    backgroundColor: darkSurface,
                     title: const Text(
                       'Vider l\'historique',
                       style: TextStyle(
+                        color: darkText,
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF2E3440),
                       ),
                     ),
                     content: const Text(
                       'Voulez-vous vraiment supprimer tout l\'historique ?',
                       style: TextStyle(
-                        color: Color(0xFF4C566A),
+                        color: darkTextSecondary,
                       ),
                     ),
                     actions: [
@@ -217,7 +238,7 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
                         child: const Text(
                           'Annuler',
                           style: TextStyle(
-                            color: Color(0xFF4C566A),
+                            color: darkTextSecondary,
                           ),
                         ),
                       ),
@@ -229,7 +250,7 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
                         child: const Text(
                           'Supprimer',
                           style: TextStyle(
-                            color: Color(0xFFBF616A),
+                            color: darkError,
                           ),
                         ),
                       ),
@@ -249,14 +270,14 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
                   Icon(
                     Icons.content_paste_outlined,
                     size: 64,
-                    color: Colors.grey[300],
+                    color: darkTextSecondary.withOpacity(0.5),
                   ),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     'Aucun élément copié',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey[600],
+                      color: darkTextSecondary,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -265,8 +286,8 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
             )
           : Theme(
               data: Theme.of(context).copyWith(
-                canvasColor: Colors.white,
-                shadowColor: Colors.transparent,
+                canvasColor: darkBackground,
+                shadowColor: Colors.black.withOpacity(0.3),
               ),
               child: ReorderableListView.builder(
                 buildDefaultDragHandles: false,
@@ -279,7 +300,7 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
                       final double elevation = animation.value * 8;
                       return Material(
                         elevation: elevation,
-                        color: Colors.white,
+                        color: darkSurface,
                         borderRadius: BorderRadius.circular(8),
                         child: child,
                       );
@@ -295,11 +316,11 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
                     index: index,
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 1),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
+                      decoration: const BoxDecoration(
+                        color: darkSurface,
                         border: Border(
                           bottom: BorderSide(
-                            color: Colors.grey[100]!,
+                            color: darkBorder,
                             width: 1,
                           ),
                         ),
@@ -333,7 +354,7 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
                                         style: const TextStyle(
                                           fontSize: 15,
                                           height: 1.5,
-                                          color: Color(0xFF2E3440),
+                                          color: darkText,
                                         ),
                                         maxLines: 3,
                                         overflow: TextOverflow.ellipsis,
@@ -341,9 +362,9 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
                                       const SizedBox(height: 4),
                                       Text(
                                         _formatTimestamp(item['timestamp']),
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 12,
-                                          color: Colors.grey[500],
+                                          color: darkTextSecondary,
                                           letterSpacing: -0.3,
                                         ),
                                       ),
@@ -354,7 +375,7 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
                                   icon: const Icon(
                                     Icons.delete_outline,
                                     size: 20,
-                                    color: Color(0xFF4C566A),
+                                    color: darkTextSecondary,
                                   ),
                                   onPressed: () => _deleteItem(item['id']),
                                 ),
